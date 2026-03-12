@@ -1,4 +1,81 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "description": "Set up the Alert integration to create alert entities from the UI. Individual alerts are added as sub-entries after setup."
+      }
+    }
+  },
+  "config_subentries": {
+    "alert": {
+      "entry_type": "Alert",
+      "initiate_flow": {
+        "reconfigure": "Edit alert",
+        "user": "Add alert"
+      },
+      "step": {
+        "user": {
+          "title": "Add alert",
+          "data": {
+            "name": "[%key:common::config_flow::data::name%]",
+            "entity_id": "Entity",
+            "repeat": "Repeat interval (minutes)",
+            "state": "Trigger state",
+            "can_acknowledge": "Can acknowledge",
+            "skip_first": "Skip first notification",
+            "message": "Message",
+            "done_message": "Done message",
+            "title": "Notification title",
+            "notifiers": "Notifiers",
+            "data": "Extra data (YAML)"
+          },
+          "data_description": {
+            "entity_id": "The entity whose state will be watched to trigger the alert.",
+            "repeat": "Minutes between repeated notifications while the alert is active.",
+            "state": "The entity state value that triggers the alert.",
+            "message": "Notification message. Supports Jinja2 templates.",
+            "done_message": "Message sent when the alert clears. Use 'clear_notification' for mobile apps. Supports Jinja2 templates.",
+            "title": "Notification title. Supports Jinja2 templates.",
+            "notifiers": "One notification service name per line (e.g. notify.mobile_app_my_phone).",
+            "data": "Extra parameters to pass to the notification service, as a YAML mapping."
+          }
+        },
+        "reconfigure": {
+          "title": "Edit alert",
+          "data": {
+            "name": "[%key:component::alert::config_subentries::alert::step::user::data::name%]",
+            "entity_id": "[%key:component::alert::config_subentries::alert::step::user::data::entity_id%]",
+            "repeat": "[%key:component::alert::config_subentries::alert::step::user::data::repeat%]",
+            "state": "[%key:component::alert::config_subentries::alert::step::user::data::state%]",
+            "can_acknowledge": "[%key:component::alert::config_subentries::alert::step::user::data::can_acknowledge%]",
+            "skip_first": "[%key:component::alert::config_subentries::alert::step::user::data::skip_first%]",
+            "message": "[%key:component::alert::config_subentries::alert::step::user::data::message%]",
+            "done_message": "[%key:component::alert::config_subentries::alert::step::user::data::done_message%]",
+            "title": "[%key:component::alert::config_subentries::alert::step::user::data::title%]",
+            "notifiers": "[%key:component::alert::config_subentries::alert::step::user::data::notifiers%]",
+            "data": "[%key:component::alert::config_subentries::alert::step::user::data::data%]"
+          },
+          "data_description": {
+            "entity_id": "[%key:component::alert::config_subentries::alert::step::user::data_description::entity_id%]",
+            "repeat": "[%key:component::alert::config_subentries::alert::step::user::data_description::repeat%]",
+            "state": "[%key:component::alert::config_subentries::alert::step::user::data_description::state%]",
+            "message": "[%key:component::alert::config_subentries::alert::step::user::data_description::message%]",
+            "done_message": "[%key:component::alert::config_subentries::alert::step::user::data_description::done_message%]",
+            "title": "[%key:component::alert::config_subentries::alert::step::user::data_description::title%]",
+            "notifiers": "[%key:component::alert::config_subentries::alert::step::user::data_description::notifiers%]",
+            "data": "[%key:component::alert::config_subentries::alert::step::user::data_description::data%]"
+          }
+        }
+      },
+      "error": {
+        "invalid_data": "The data field must be a valid YAML mapping (key: value pairs).",
+        "invalid_yaml": "Invalid YAML in the data field."
+      },
+      "abort": {
+        "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
+      }
+    }
+  },
   "entity_component": {
     "_": {
       "name": "[%key:component::alert::title%]",

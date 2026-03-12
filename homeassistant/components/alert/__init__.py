@@ -5,8 +5,11 @@ DEVELOPMENT OF THE ALERT INTEGRATION IS FROZEN.
 
 from __future__ import annotations
 
+from typing import Any
+
 import voluptuous as vol
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ENTITY_ID,
     CONF_NAME,
@@ -20,6 +23,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.helpers.template import Template
 from homeassistant.helpers.typing import ConfigType
 
 from .const import (
@@ -71,10 +75,15 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     DEVELOPMENT OF THE ALERT INTEGRATION IS FROZEN.
     """
     component = EntityComponent[AlertEntity](LOGGER, DOMAIN, hass)
+    hass.data[DOMAIN] = component
+
+    component.async_register_entity_service(SERVICE_TURN_OFF, None, "async_turn_off")
+    component.async_register_entity_service(SERVICE_TURN_ON, None, "async_turn_on")
+    component.async_register_entity_service(SERVICE_TOGGLE, None, "async_toggle")
 
     entities: list[AlertEntity] = []
 
-    for object_id, cfg in config[DOMAIN].items():
+    for object_id, cfg in config.get(DOMAIN, {}).items():
         if not cfg:
             cfg = {}
 
@@ -108,13 +117,57 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             )
         )
 
-    if not entities:
-        return False
+    if entities:
+        await component.async_add_entities(entities)
 
-    component.async_register_entity_service(SERVICE_TURN_OFF, None, "async_turn_off")
-    component.async_register_entity_service(SERVICE_TURN_ON, None, "async_turn_on")
-    component.async_register_entity_service(SERVICE_TOGGLE, None, "async_toggle")
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Alert from a config entry."""
+    component: EntityComponent[AlertEntity] = hass.data[DOMAIN]
+
+    entities: list[AlertEntity] = []
+    for subentry in entry.subentries.values():
+        if subentry.subentry_type != "alert":
+            continue
+        data: dict[str, Any] = dict(subentry.data)
+
+        entity = AlertEntity(
+            hass=hass,
+            entity_id=None,
+            name=data[CONF_NAME],
+            watched_entity_id=data[CONF_ENTITY_ID],
+            state=data.get(CONF_STATE, STATE_ON),
+            repeat=data[CONF_REPEAT],
+            skip_first=data.get(CONF_SKIP_FIRST, DEFAULT_SKIP_FIRST),
+            message_template=(
+                Template(data[CONF_ALERT_MESSAGE], hass)
+                if data.get(CONF_ALERT_MESSAGE)
+                else None
+            ),
+            done_message_template=(
+                Template(data[CONF_DONE_MESSAGE], hass)
+                if data.get(CONF_DONE_MESSAGE)
+                else None
+            ),
+            notifiers=data.get(CONF_NOTIFIERS, []),
+            can_ack=data.get(CONF_CAN_ACK, DEFAULT_CAN_ACK),
+            title_template=(
+                Template(data[CONF_TITLE], hass) if data.get(CONF_TITLE) else None
+            ),
+            data=data.get(CONF_DATA) or {},
+        )
+        entity._attr_unique_id = subentry.subentry_id
+        entities.append(entity)
 
     await component.async_add_entities(entities)
+    entry.runtime_data = entities
+    return True
 
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload Alert config entry."""
+    for entity in entry.runtime_data:
+        await entity.async_remove()
     return True
