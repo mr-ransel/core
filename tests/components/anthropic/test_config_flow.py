@@ -396,6 +396,7 @@ async def test_creating_subentry_with_required_thinking(
         pytest.param("claude-opus-5", id="opus_5"),
         pytest.param("claude-sonnet-4-6", id="sonnet_4_6"),
         pytest.param("claude-sonnet-5", id="sonnet_5"),
+        pytest.param("claude-haiku-5-5", id="haiku_5_5"),
     ],
 )
 @pytest.mark.usefixtures("mock_init_component")
@@ -426,6 +427,35 @@ async def test_subentry_with_optional_thinking(
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     assert subentry.data[CONF_THINKING_EFFORT] == "none"
+
+
+@pytest.mark.parametrize(
+    ("model", "tool_search_supported"),
+    [
+        pytest.param("claude-haiku-4-5", False, id="haiku_4_5"),
+        pytest.param("claude-haiku-5-5", True, id="haiku_5_5"),
+    ],
+)
+@pytest.mark.usefixtures("mock_init_component")
+async def test_subentry_tool_search_option(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    model: str,
+    tool_search_supported: bool,
+) -> None:
+    """Test the tool search option is only offered on supported models."""
+    subentry = next(iter(mock_config_entry.subentries.values()))
+    result = await mock_config_entry.start_subentry_reconfigure_flow(
+        hass, subentry.subentry_id
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {CONF_RECOMMENDED: False}
+    )
+    result = await hass.config_entries.subentries.async_configure(
+        result["flow_id"], {CONF_CHAT_MODEL: model}
+    )
+    assert result["step_id"] == "model"
+    assert (CONF_TOOL_SEARCH in result["data_schema"].schema) is tool_search_supported
 
 
 @pytest.mark.parametrize(

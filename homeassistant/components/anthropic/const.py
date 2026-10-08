@@ -54,10 +54,11 @@ DEFAULT = {
 }
 
 TOOL_SEARCH_UNSUPPORTED_MODELS = [
-    "claude-haiku",
+    "claude-haiku-4",
 ]
 
 THINKING_EFFORT_NONE_SUPPORTED_MODELS = {
+    "claude-haiku-5-5",
     "claude-opus-4-6",
     "claude-opus-4-7",
     "claude-opus-4-8",
